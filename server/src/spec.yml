@@ -1,0 +1,42 @@
+openapi: 3.0.0
+info:
+  title: Контракт для ОП
+  version: Pre-alpha
+  description: API для работы с заданиями и тетрадками для нашего маленького (пока ещё!) подобия Stepik. Здесь находится наш скромный функционал, выраженный в возможности создать новые задания, получить всю возможную информацию об уже имеющемся задании по его идентификатору, а также тут происходит связь  "учитель - студент", когда ученик высылает своё решение (также по идентификатору).
+
+paths:
+  /tasks:
+    post:
+      summary: Создать новое задание для ученика
+      description: Позволяет создать задание, прикрепив текст задачи и Python тетрадку.
+      tags:
+        - Task
+      operationId: create_task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskData'
+      responses:
+        '200':
+          description: "Successful response"
+
+components:
+  schemas:
+    CreateTaskData:
+      type: object
+      properties:
+        task_name:
+          type: string
+          description: Название экстраординарного задания
+        description:
+          type: string
+          description: Описание задачи, которую обязательно будут решать
+        notebook:
+          type: string
+          format: binary
+          description: Python тетрадка (файл с разрешением .ipynb)
+      required:
+        - task_name
+        - notebook
