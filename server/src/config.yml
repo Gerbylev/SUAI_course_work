@@ -1,0 +1,22 @@
+profile:
+server_port: 5000
+prometheus_port: 5001
+
+api_schema_path: spec.yml
+
+gpt:
+  url: https://caila.io/api/adapters/openai
+  model:
+  token:
+
+logging:
+    graylog:
+      enabled: false
+      udp: true
+    console:
+      enabled: true
+    root_level: INFO
+    levels:
+      httpx: WARN
+      openai: WARN
+      uvicorn.access: WARN
