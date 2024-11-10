@@ -17,12 +17,10 @@ const TaskForm = () => {
     });
 
     useEffect(() => {
-        // Здесь мы уже используем хардкоженные данные, так что fetchTask не нужен
         form.setFieldsValue(taskData);
     }, [taskData, form]);
 
     const handleFinish = (values) => {
-        // Обработка данных формы
         console.log("Задание:", values);
     };
 
