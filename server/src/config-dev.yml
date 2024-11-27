@@ -1,3 +1,11 @@
 gpt:
   model:
   token:
+
+database:
+  engine:
+  user:
+  password:
+  host:
+  port:
+  dbname:

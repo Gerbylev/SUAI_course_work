@@ -1,11 +1,107 @@
 openapi: 3.0.0
+
 info:
   title: Контракт для ОП
   version: Pre-alpha
-  description: API для работы с заданиями и тетрадками для нашего маленького (пока ещё!) подобия Stepik. Здесь находится наш скромный функционал, выраженный в возможности создать новые задания, получить всю возможную информацию об уже имеющемся задании по его идентификатору, а также тут происходит связь  "учитель - студент", когда ученик высылает своё решение (также по идентификатору).
+  description: API для работы с заданиями и тетрадками для нашего маленького (пока ещё!) подобия Stepik. Здесь находится наш скромный функционал, выраженный в возможности создать новые задания, получить всю возможную информацию об уже имеющемся задании по его идентификатору, а также тут происходит связь "учитель - студент", когда ученик высылает своё решение (также по идентификатору).
 
 paths:
-  /tasks:
+###############################################################################################
+#
+#                                     auth
+#
+###############################################################################################
+  /api/auth/register:
+    post:
+      security: []
+      summary: Регистрация нового пользователя
+      description: Позволяет зарегистрировать нового пользователя.
+      tags:
+        - Auth
+      operationId: register_user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterData'
+      responses:
+        '200':
+          description: "Успешный ответ, список заданий"
+
+  /api/auth/login:
+    post:
+      security: []
+      summary: Логин пользователя
+      description: Позволяет пользователю войти в систему.
+      tags:
+        - Auth
+      operationId: login_user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginData'
+      responses:
+        '200':
+          description: "Успешный логин"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenData'
+
+###############################################################################################
+#
+#                                     Account
+#
+###############################################################################################
+  /api/account_info:
+    get:
+      tags:
+        - Account
+      operationId: account_info
+      responses:
+        '200':
+          description: "Успешный логин"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountData'
+
+
+###############################################################################################
+#
+#                                     Task
+#
+###############################################################################################
+  /api/tasks:
+    get:
+      security: []
+      summary: Получить все задания
+      description: Возвращает список всех заданий.
+      tags:
+        - Task
+      parameters:
+        - $ref: '#/components/parameters/PageParameter'
+        - $ref: '#/components/parameters/LimitParameter'
+        - $ref: '#/components/parameters/TitleParameter'
+        - $ref: '#/components/parameters/StartDateParameter'
+        - $ref: '#/components/parameters/EndDateParameter'
+        - $ref: '#/components/parameters/AuthorNameParameter'
+        - $ref: '#/components/parameters/StatusParameter'
+      operationId: get_all_tasks
+      responses:
+        '200':
+          description: "Успешный ответ, список заданий"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TaskData'
+
+  /api/task:
     post:
       summary: Создать новое задание для ученика
       description: Позволяет создать задание, прикрепив текст задачи и Python тетрадку.
@@ -15,28 +111,546 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              $ref: '#/components/schemas/CreateTaskData'
+              type: object
+              properties:
+                task_data:
+                  $ref: '#/components/schemas/CreateTaskData'
+                notebooks:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
       responses:
         '200':
-          description: "Successful response"
+          description: "Успешно создано"
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/TaskData'
+
+  /api/task/{taskId}:
+    get:
+      security: []
+      summary: Получить задание по ID
+      description: Возвращает всю информацию о задании по его идентификатору.
+      tags:
+        - Task
+      operationId: get_task
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '200':
+          description: "Успешный ответ, информация о задании"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskData'
+
+    put:
+      summary: Редактировать задание
+      description: Обновляет информацию о задании по его идентификатору.
+      tags:
+        - Task
+      operationId: edit_task
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                task_data:
+                  $ref: '#/components/schemas/CreateTaskData'
+                notebooks:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        '200':
+          description: "Успешно обновлено"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskData'
+
+    delete:
+      summary: Удалить задание
+      description: Удаляет задание по его идентификатору.
+      tags:
+        - Task
+      operationId: delete_task
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '204':
+          description: "Удалено"
+
+###############################################################################################
+#
+#                                     Subtask
+#
+###############################################################################################
+
+  /api/subtask/{taskId}:
+    get:
+      tags:
+        - Subtask
+      operationId: get_subtask
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '200':
+          description: "Успешный ответ, информация о задании"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SubtaskData'
+
+    post:
+      tags:
+        - Subtask
+      operationId: add_subtask
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSubtaskData'
+      responses:
+        '200':
+          description: "Успешный ответ, информация о задании"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SubtaskData'
+
+    put:
+      tags:
+        - Subtask
+      operationId: edit_subtask
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubtaskData'
+      responses:
+        '200':
+          description: "Успешный ответ, информация о задании"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SubtaskData'
+
+    delete:
+      tags:
+        - Subtask
+      operationId: delete_subtask
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+        - $ref: '#/components/parameters/SubtaskId'
+      responses:
+        '200':
+          description: "Успешный ответ, информация о задании"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SubtaskData'
+
+
+###############################################################################################
+#
+#                                     Solution
+#
+###############################################################################################
+  /api/solutions/{taskId}:
+    get:
+      tags:
+        - Solution
+      operationId: get_solutions
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '200':
+          description: "Успешный ответ, информация о задании"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SolutionsData'
+
+  /api/solution/{taskId}:
+    get:
+      tags:
+        - Solution
+      operationId: get_solution
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+        - $ref: '#/components/parameters/SolutionId'
+      responses:
+        '200':
+          description: "Успешный ответ, информация о задании"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolutionData'
+
+    post:
+      tags:
+        - Solution
+      operationId: add_solution
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                notebooks:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        '200':
+          description: "Успешный ответ, информация о задании"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SolutionData'
+
+
+
+
+###############################################################################################
+#
+#                                     Chat
+#
+###############################################################################################
+  /api/solution/{taskId}/chat:
+    get:
+      tags:
+        - Chat
+      operationId: get_chats
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '200':
+          description: "Успешный ответ, информация о задании"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChatsData'
+
+  /api/solution/{taskId}/chat/{chatId}:
+    get:
+      tags:
+        - Chat
+      operationId: get_chat
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+        - $ref: '#/components/parameters/ChatId'
+      responses:
+        '200':
+          description: "Успешный ответ, информация о задании"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChatData'
+
+    post:
+      tags:
+        - Chat
+      operationId: chat
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+        - $ref: '#/components/parameters/ChatId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptData'
+      responses:
+        '200':
+          description: "Успешный ответ, информация о задании"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChatData'
+
 
 components:
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+
+  parameters:
+    SolutionId:
+      name: solutionId
+      in: query
+      required: false
+      schema:
+        type: integer
+
+    SubtaskId:
+      name: subtaskId
+      in: query
+      required: false
+      schema:
+        type: integer
+
+    TitleParameter:
+      name: title
+      in: query
+      required: false
+      schema:
+        type: string
+
+    StartDateParameter:
+      name: start_date
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date
+
+    EndDateParameter:
+      name: end_date
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date
+
+    AuthorNameParameter:
+      name: authorName
+      in: query
+      required: false
+      schema:
+        type: string
+
+    StatusParameter:
+      name: status
+      in: query
+      required: false
+      schema:
+        type: string
+
+
+    PageParameter:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        example: 1
+    LimitParameter:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        example: 10
+    TaskId:
+      name: taskId
+      in: path
+      required: true
+      schema:
+        type: string
+    ChatId:
+      name: chatId
+      in: path
+      required: true
+      schema:
+        type: string
+
+
+
   schemas:
+    TokenData:
+      type: object
+      properties:
+        token:
+          type: string
+
+    CreateSubtaskData:
+      type: object
+      properties:
+        text:
+          type: string
+
+    ChatsData:
+      type: object
+      properties:
+        id:
+          type: string
+        summary:
+          type: string
+
+    PromptData:
+      type: object
+      properties:
+        prompt:
+          type: string
+
+    ChatData:
+      type: object
+      properties:
+        id:
+          type: string
+        summary:
+          type: string
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/MessageData'
+
+    MessageData:
+      type: object
+      properties:
+        role:
+          type: string
+        content:
+          type: string
+
+
+    SolutionsData:
+      type: object
+      properties:
+        id:
+          type: integer
+        author:
+          type: string
+        status:
+          type: string
+
+    SolutionData:
+      type: object
+      properties:
+        status:
+          type: string
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/CommentData'
+
+    CommentData:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+        type:
+          type: string
+
+    SubtaskData:
+      type: object
+      properties:
+        id:
+          type: integer
+        text:
+          type: string
+
+
     CreateTaskData:
       type: object
       properties:
-        task_name:
+        title:
           type: string
-          description: Название экстраординарного задания
-        description:
+          description: Название задания
+        task:
           type: string
-          description: Описание задачи, которую обязательно будут решать
-        notebook:
-          type: string
-          format: binary
-          description: Python тетрадка (файл с разрешением .ipynb)
+          description: Описание задачи
       required:
         - task_name
-        - notebook
+        - description
+
+    TaskData:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Идентификатор задания
+        title:
+          type: string
+        task:
+          type: string
+        author:
+          type: string
+        solved:
+          type: string
+        is_analyzed:
+          type: boolean
+
+    AccountData:
+      type: object
+      properties:
+        username:
+          type: string
+        full_name:
+          type: string
+        solved_tasks:
+          type: integer
+
+    RegisterData:
+      type: object
+      properties:
+        full_name:
+          type: string
+        username:
+          type: string
+          description: Имя пользователя
+        password:
+          type: string
+          description: Пароль пользователя
+      required:
+        - username
+        - password
+        - full_name
+
+    LoginData:
+      type: object
+      properties:
+        username:
+          type: string
+          description: Имя пользователя
+        password:
+          type: string
+          description: Пароль пользователя
+      required:
+        - username
+        - password
+security:
+  - BearerAuth: []

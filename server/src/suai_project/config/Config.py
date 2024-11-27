@@ -27,6 +27,15 @@ class LoggingConfig:
     root_level: str
     levels: dict[str, str]
 
+@dataclass
+class DatabaseConfig:
+    engine: str
+    user: str
+    password: str
+    host: str
+    port: int
+    dbname: str
+
 
 @dataclass
 class Config:
@@ -36,7 +45,7 @@ class Config:
     api_schema_path: str
     gpt: GptConfig
     logging: LoggingConfig
-
+    database: DatabaseConfig
 
 class ConfigLoader:
 
@@ -56,7 +65,7 @@ class ConfigLoader:
     def load_config(self, cls=Config) -> Config:
         profile = os.environ.get('PROFILE', 'dev')
 
-        self.__load_if_exists("/etc/cyntai-server/config.yml")
+        self.__load_if_exists("/etc/server/config.yml")
         self.__load_if_exists("./config-local.yml")
         self.__load_if_exists(f"./config-{profile}.yml")
         self.__load_if_exists("./config.yml", required=True)

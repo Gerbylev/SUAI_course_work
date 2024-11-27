@@ -88,12 +88,12 @@ async def main():
     llm_service = LLMService()
     REGISTRY.put(llm_service)
     work_service = WorkService()
-    # task_service = TaskService()
-    # task_dto = await task_service.indexing_task(task_text)
-    # with open('task_dto.pkl', 'wb') as f:
-    #     pickle.dump(task_dto, f)
-    with open('task_dto.pkl', 'rb') as f:
-        task_dto = pickle.load(f)
+    task_service = TaskService()
+    task_dto = await task_service.indexing_task(task_text)
+    with open('task_dto.pkl', 'wb') as f:
+        pickle.dump(task_dto, f)
+    # with open('task_dto.pkl', 'rb') as f:
+    #     task_dto = pickle.load(f)
     work_dto = WorkDto(contents=get_file_dto_from_folder('/home/oleg/forTest/lab3/'))
     await work_service.check_work(work_dto, task_dto)
 

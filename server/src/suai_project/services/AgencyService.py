@@ -50,19 +50,19 @@ class AgencyService:
             status = 'fail'
             if 'выполнено' in lines[0].lower():
                 status = 'ok'
-            return {"status": status, "description": '\n'.join(lines[1::]), "highlight": self.highlight }
+            return {"status": status, "description": '\n'.join(lines[1::]), "highlight": self.highlight, "iter": self.count }
         else:
             self.messages.append({"role": "user", "content": prompt_back_to_script.render()})
         return await self.agency_step()
 
     async def agency_step(self):
         if self.count <= self.max_iter:
-            response = await self.llm_service.fetch_completion_with_messages({'messages': self.messages})
+            response = await self.llm_service.fetch_completion_with_messages({'messages': self.messages, "max_tokens": 200})
             self.messages.append({"role": 'assistant', 'content': response})
             self.count += 1
             return await self.check_response(response)
         else:
-            return {"status": "fail", "description": "закончились итерации", "highlight": self.highlight }
+            return {"status": "fail", "description": "закончились итерации", "highlight": self.highlight, "iter": self.count }
 
 
 

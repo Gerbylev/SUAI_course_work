@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:13
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: # password
+      POSTGRES_DB: # database
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+
+  mobile_app:
+    image: raghtnes/suai_project:main
+    container_name: app
+    depends_on:
+      - db
+    volumes:
+      - /etc/server:/etc/server
+      - /var/log/server:/var/log/server
+    ports:
+      - "5000:5000"
+

@@ -1,4 +1,4 @@
-FROM openapitools/openapi-generator-cli:v7.8.0
+FROM raghtnes/openapi-generator-fastapi-security-fix:tagname
 
 ARG USER=docker-build
 ARG UID=1000

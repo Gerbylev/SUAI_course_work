@@ -1,4 +1,3 @@
-profile:
 server_port: 5000
 prometheus_port: 5001
 
@@ -9,12 +8,22 @@ gpt:
   model:
   token:
 
+database:
+  engine: postgresql
+  user:
+  password:
+  host:
+  port:
+  dbname:
+
 logging:
     graylog:
+      host: 0.0.0.0
+      port: 9000
       enabled: false
       udp: true
     console:
-      enabled: true
+      enabled: false
     root_level: INFO
     levels:
       httpx: WARN

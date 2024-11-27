@@ -2,6 +2,7 @@
 server/src/suai_project/endpoints/apis
 server/src/suai_project/endpoints/models
 server/src/suai_project/endpoints/router_init.py
+docker-compose.yml
 
 # secret info
 config-local.yml

@@ -4,3 +4,10 @@ pyyaml
 openai
 graypy
 Jinja2
+alembic
+sqlalchemy
+asyncpg
+databases
+sqlalchemy
+psycopg2-binary
+python-multipart
