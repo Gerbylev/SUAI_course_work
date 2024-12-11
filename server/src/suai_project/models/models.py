@@ -32,3 +32,29 @@ class Task(Base):
     is_analyzed: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
+class Subtask(Base):
+    id: Mapped[int_pk]
+    task_id: Mapped[str] = mapped_column(ForeignKey("tasks.id"), nullable=False)
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+
+class Solved(Base):
+    id: Mapped[str_pk]
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    task_id: Mapped[str] = mapped_column(ForeignKey("tasks.id"), nullable=False)
+    status: Mapped[str] = mapped_column(String(256), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+
+class Comment(Base):
+    id: Mapped[str_pk]
+    solved_id: Mapped[str] = mapped_column(ForeignKey("solveds.id"), nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(256), nullable=False)
+    type: Mapped[str] = mapped_column(String(256), nullable=False)
+
+class Chat(Base):
+    id: Mapped[str_pk]
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    task_id: Mapped[str] = mapped_column(ForeignKey("tasks.id"), nullable=False)
+    title: Mapped[str] = mapped_column(Text, nullable=False)
+    chat_history: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())

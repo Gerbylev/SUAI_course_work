@@ -4,7 +4,14 @@ set -e
 ROOT=$(realpath $(dirname $0))
 cd "$ROOT"
 
-docker run --rm -v "${PWD}":/app raghtnes/openapi-generator-fastapi-security-fix:tagname generate  \
+docker build . -f Dockerfile-swagger \
+              --build-arg USER=$USER \
+              --build-arg UID=$(id -u) \
+              --build-arg GID=$(id -g) \
+              -t my-openapi-generator
+
+
+docker run --rm -v "${PWD}":/app my-openapi-generator generate  \
     -i /app/src/spec.yml  -g python-fastapi   -o /app/openapi-generator-output \
     --additional-properties=packageName=suai_project.endpoints --additional-properties=fastapiImplementationPackage=suai_project.endpoints
 

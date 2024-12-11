@@ -1,6 +1,8 @@
 from datetime import date
 from http import HTTPStatus
 from typing import List, Optional, Union, Tuple
+
+from sqlalchemy import false
 from typing_extensions import Annotated
 
 from fastapi import HTTPException
@@ -21,8 +23,7 @@ from suai_project.utils.generate_token import generate_key
 class TaskEndpoint(BaseTaskApi):
 
     async def create_task(self, task_data: Optional[CreateTaskData],
-                          notebooks: Optional[List[Union[StrictBytes, StrictStr, Tuple[StrictStr, StrictBytes]]]],
-                          token_BearerAuth: TokenModel) -> AccountData:
+                          token_BearerAuth: TokenModel) -> TaskData:
         user = get_account_with_raise(token_BearerAuth)
         validator = Validator(task_data)
         validator.length("title", min_len=0, max_len=526)
@@ -30,13 +31,12 @@ class TaskEndpoint(BaseTaskApi):
         validator.check()
         task_id = generate_key(60)
         task = TaskDAO.add(**{**task_data.to_dict(), "user_id": user.id, "id": task_id})
-        task = TaskDAO.to_api(task)
-        # TODO надо запускать обработку задания
+        task = TaskDAO.to_api(task, user)
         return task
 
     async def edit_task(self, taskId: StrictStr, task_data: Optional[CreateTaskData],
-                        notebooks: Optional[List[Union[StrictBytes, StrictStr, Tuple[StrictStr, StrictBytes]]]],
                         token_BearerAuth: TokenModel) -> TaskData:
+        user = get_account_with_raise(token_BearerAuth)
         validator = Validator(task_data)
         validator.length("title", min_len=0, max_len=526)
         validator.length("task", min_len=100, max_len=10000)
@@ -48,9 +48,10 @@ class TaskEndpoint(BaseTaskApi):
                 detail="Task doesn't exist",
             )
         check_permission(token_BearerAuth, task.user_id)
-        task = TaskDAO.update(filter_by={"id": taskId}, **task_data.to_dict())
+        TaskDAO.update(filter_by={"id": taskId}, **task_data.to_dict())
+        task = TaskDAO.find_one_or_none_by_id(taskId)
         # TODO надо запускать обработку задания
-        return TaskDAO.to_api(task)
+        return TaskDAO.to_api(task, user)
 
     async def delete_task(self, taskId: StrictStr, token_BearerAuth: TokenModel) -> None:
         task = TaskDAO.find_one_or_none_by_id(taskId)
@@ -62,14 +63,15 @@ class TaskEndpoint(BaseTaskApi):
         check_permission(token_BearerAuth, task.user_id)
         TaskDAO.delete(**{"id":task.id})
 
-    async def get_task(self, taskId: StrictStr) -> TaskData:
+    async def get_task(self, taskId: StrictStr, token_BearerAuth: TokenModel) -> TaskData:
+        user = get_account(token_BearerAuth)
         task = TaskDAO.find_one_or_none_by_id(taskId)
         if task is None:
             raise HTTPException(
                 status_code=HTTPStatus.UNAUTHORIZED,
                 detail="Task doesn't exist",
             )
-        return TaskDAO.to_api(task)
+        return TaskDAO.to_api(task, user)
 
     async def get_all_tasks(self, page: Optional[StrictInt] = 1, limit: Optional[StrictInt] = 10, title: Optional[StrictStr] = None,
                             start_date: Optional[date] = None, end_date: Optional[date] = None, author_name: Optional[StrictStr] = None,
@@ -93,7 +95,7 @@ class TaskEndpoint(BaseTaskApi):
             limit=limit
         )
 
-        return [TaskDAO.to_api(task) for task in tasks]
+        return [TaskDAO.to_api(task, False) for task in tasks]
 
 
 

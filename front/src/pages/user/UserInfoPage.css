@@ -1,0 +1,74 @@
+.user-info-page {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 50px;
+    background: linear-gradient(135deg, #e0c3fc, #8ec5fc);
+    background-attachment: fixed;
+    background-size: cover;
+    animation: gradientAnimation 6s ease infinite;
+  }
+  
+  @keyframes gradientAnimation {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+  
+  .user-info-card {
+    text-align: center;
+    background: #ffffff;
+    padding: 32px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    max-width: 400px;
+    width: 100%;
+    transform: translateY(20px);
+    opacity: 0;
+    animation: fadeInUp 0.8s ease forwards;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .user-info-card:hover {
+    transform: translateY(0) scale(1.03);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+  }
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(50px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(20px);
+    }
+  }
+  
+  .user-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .user-name {
+    font-size: 26px;
+    font-weight: bold;
+    margin-bottom: 12px;
+    color: #333;
+  }
+  
+  .user-detail {
+    font-size: 18px;
+    color: #666;
+  }
+  

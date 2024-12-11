@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: JustOleg1!
-      POSTGRES_DB: suai_hack
+      POSTGRES_DB: suai_project
     ports:
       - "5432:5432"
     volumes:

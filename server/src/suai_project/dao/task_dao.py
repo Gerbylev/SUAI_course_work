@@ -14,12 +14,14 @@ class TaskDAO(BaseDAO):
     model = Task
 
     @classmethod
-    def to_api(cls, task_dao_data)-> TaskData:
+    def to_api(cls, task_dao_data, user)-> TaskData:
+        owner = UserDAO.find_one_or_none_by_id(task_dao_data.user_id)
         return TaskData(
             id = task_dao_data.id,
             title = task_dao_data.title,
             task = task_dao_data.task,
-            author = UserDAO.find_one_or_none_by_id(task_dao_data.user_id).full_name,
+            author = owner.full_name,
+            owner = owner.id == user.id if user else False,
             solved = "Не решено",  # TODO
             is_analyzed = False    # TODO
         )

@@ -111,17 +111,9 @@ paths:
       requestBody:
         required: true
         content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                task_data:
-                  $ref: '#/components/schemas/CreateTaskData'
-                notebooks:
-                  type: array
-                  items:
-                    type: string
-                    format: binary
+          application/json:
+              schema:
+                $ref: '#/components/schemas/CreateTaskData'
       responses:
         '200':
           description: "Успешно создано"
@@ -132,7 +124,6 @@ paths:
 
   /api/task/{taskId}:
     get:
-      security: []
       summary: Получить задание по ID
       description: Возвращает всю информацию о задании по его идентификатору.
       tags:
@@ -159,17 +150,9 @@ paths:
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          application/json:
             schema:
-              type: object
-              properties:
-                task_data:
-                  $ref: '#/components/schemas/CreateTaskData'
-                notebooks:
-                  type: array
-                  items:
-                    type: string
-                    format: binary
+              $ref: '#/components/schemas/CreateTaskData'
       responses:
         '200':
           description: "Успешно обновлено"
@@ -189,7 +172,6 @@ paths:
       responses:
         '204':
           description: "Удалено"
-
 ###############################################################################################
 #
 #                                     Subtask
@@ -337,8 +319,6 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
                   $ref: '#/components/schemas/SolutionData'
 
 
@@ -365,6 +345,21 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ChatsData'
+
+    post:
+      tags:
+        - Chat
+      operationId: create_chats
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '200':
+          description: "Успешный ответ, информация о задании"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatData'
+
 
   /api/solution/{taskId}/chat/{chatId}:
     get:
@@ -611,6 +606,8 @@ components:
           type: string
         solved:
           type: string
+        owner:
+          type: boolean
         is_analyzed:
           type: boolean
 

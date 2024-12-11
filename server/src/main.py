@@ -1,5 +1,6 @@
 import uvicorn
 import fastapi
+from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 
 from suai_project.config.Config import CONFIG
@@ -9,7 +10,16 @@ from suai_project.endpoints import router_init
 from suai_project.services.error_service import custom_exception_handler, generic_exception_handler, HandleWebException
 from suai_project.utils.logger import get_logger_univorn
 
+
 app = router_init.app
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.add_exception_handler(HandleWebException, custom_exception_handler)
 app.add_exception_handler(Exception, generic_exception_handler)

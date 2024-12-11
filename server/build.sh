@@ -10,10 +10,8 @@ else
     BRANCH=$1
 fi
 
-#     GENERATE API
 sh ./generate-api.sh
 
-##     BUILD PRODUCTION IMAGE
 SERVICE_NAME="suai_project"
 BRANCH_NAME_LOWER=$(echo "$BRANCH" | tr '[:upper:]' '[:lower:]')
 BUILD_DATE=$(date +"%Y-%m-%dT%T")

@@ -1,0 +1,52 @@
+.tasks-page {
+    padding: 20px;
+    /* background: #f0f2f5; */
+    background: linear-gradient(135deg, #e0c3fc, #8ec5fc);
+    min-height: 100%;
+  }
+  
+  .tasks-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(2, 1fr); /* Максимум 2 карточки в ряд */
+    gap: 16px;
+  }
+  
+  .task-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .task-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+  }
+  
+  .task-content {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .task-meta {
+    margin-top: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .task-author {
+    font-weight: bold;
+  }
+  
+  .tasks-pagination {
+    margin-top: 20px;
+    text-align: center;
+  }
+  
+  .button-column {
+    display: flex;
+    flex-direction: row-reverse;
+    padding: 20px; 
+}
