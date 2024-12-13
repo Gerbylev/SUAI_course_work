@@ -262,23 +262,6 @@ paths:
 #                                     Solution
 #
 ###############################################################################################
-  /api/solutions/{taskId}:
-    get:
-      tags:
-        - Solution
-      operationId: get_solutions
-      parameters:
-        - $ref: '#/components/parameters/TaskId'
-      responses:
-        '200':
-          description: "Успешный ответ, информация о задании"
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SolutionsData'
-
   /api/solution/{taskId}:
     get:
       tags:
@@ -286,7 +269,6 @@ paths:
       operationId: get_solution
       parameters:
         - $ref: '#/components/parameters/TaskId'
-        - $ref: '#/components/parameters/SolutionId'
       responses:
         '200':
           description: "Успешный ответ, информация о задании"
@@ -294,33 +276,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SolutionData'
-
-    post:
-      tags:
-        - Solution
-      operationId: add_solution
-      parameters:
-        - $ref: '#/components/parameters/TaskId'
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                notebooks:
-                  type: array
-                  items:
-                    type: string
-                    format: binary
-      responses:
-        '200':
-          description: "Успешный ответ, информация о задании"
-          content:
-            application/json:
-              schema:
-                  $ref: '#/components/schemas/SolutionData'
-
 
 
 
@@ -375,9 +330,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ChatData'
+                $ref: '#/components/schemas/ChatData'
 
     post:
       tags:
@@ -398,9 +351,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ChatData'
+                $ref: '#/components/schemas/ChatData'
 
 
 components:
@@ -421,7 +372,7 @@ components:
     SubtaskId:
       name: subtaskId
       in: query
-      required: false
+      required: true
       schema:
         type: integer
 
@@ -566,8 +517,6 @@ components:
         status:
           type: string
         message:
-          type: string
-        type:
           type: string
 
     SubtaskData:

@@ -44,6 +44,14 @@ class Solved(Base):
     status: Mapped[str] = mapped_column(String(256), nullable=False)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
+class SolutionDetails(Base):
+    __tablename__ = "solution_details"
+
+    id: Mapped[int_pk]
+    status: Mapped[str] = mapped_column(String, nullable=False)
+    comment: Mapped[str] = mapped_column(String, nullable=False)
+    solved_id: Mapped[str] = mapped_column(ForeignKey("solveds.id"), nullable=False)
+
 class Comment(Base):
     id: Mapped[str_pk]
     solved_id: Mapped[str] = mapped_column(ForeignKey("solveds.id"), nullable=False)

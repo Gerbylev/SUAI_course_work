@@ -1,8 +1,21 @@
 import logging
+import os
+from http.client import responses
+from typing import List
 
+import yaml
+from jinja2 import Template
 from openai import AsyncOpenAI
 
 from suai_project.config.Config import CONFIG
+from suai_project.endpoints.models.chat_data import ChatData
+from suai_project.endpoints.models.message_data import MessageData
+
+prompt_file_path = os.path.join(os.path.dirname(__file__), 'prompts.yml')
+with open(prompt_file_path, 'r', encoding='utf-8') as file:
+    data = yaml.safe_load(file)
+
+instruction = Template(data['instruction_for_chat'])
 
 class LLMService:
 
@@ -61,6 +74,14 @@ class LLMService:
             logging.warning("No usage info")
 
         return str(res.choices[0].message.content)
+
+    async def chat_controller(self, messages: List[MessageData], task: str):
+        instruction_prompt = instruction.render(task_text = task)
+        messages.insert(0, MessageData(content = instruction_prompt, role = "user"))
+        response = await self.fetch_completion_with_messages({"messages": [message.to_dict() for message in messages]})
+        return MessageData(role='assistant', content=response)
+
+
 
     async def __fetch_completion_with_messages(self, args) -> str:
         res = await self.openai.chat.completions.create(

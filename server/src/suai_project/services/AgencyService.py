@@ -6,6 +6,7 @@ from jinja2 import Template
 
 from suai_project.endpoints.dto.task_dto import HighlightDto, FileDto
 from suai_project.endpoints.dto.work_dto import WorkDto
+from suai_project.models.models import Subtask
 from suai_project.services.LLMService import LLMService
 from suai_project.services.registry import REGISTRY
 
@@ -22,12 +23,13 @@ put_files = Template(data['put_files'])
 
 class AgencyService:
 
-    def __init__(self, files: List[FileDto], highlight: HighlightDto, max_iter = 10):
+    def __init__(self, files: List[FileDto], highlight: Subtask, task_text, max_iter = 10):
         self.llm_service: LLMService = REGISTRY.get(LLMService)
         self.count = 0
         self.max_iter = max_iter
         self.files = files
         self.highlight = highlight
+        self.task_text = task_text
         self.messages = [
             {"role": "user", "content": [{
                                          "type": "text",
@@ -36,7 +38,7 @@ class AgencyService:
                                          },
                                          {
                                          "type": "text",
-                                         "text": agency_prompt.render(highlight=self.highlight),
+                                         "text": agency_prompt.render(subtask=highlight.text, task_text=task_text),
                                          }]
             }
         ]

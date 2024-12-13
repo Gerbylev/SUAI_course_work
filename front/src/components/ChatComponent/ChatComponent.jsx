@@ -1,50 +1,50 @@
 import React, { useState, useEffect } from 'react';
-import { Button, List, Typography, Spin, message, Card, Select, Input, Space } from 'antd';
+import { Button, Select, Input, Typography, Spin, message, Layout, Space, Avatar } from 'antd';
+import { UserOutlined, RobotOutlined } from '@ant-design/icons';
 
+const { Header, Content, Footer } = Layout;
 const { Title, Text } = Typography;
 
 const ChatComponent = ({ taskId }) => {
   const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [selectedChat, setSelectedChat] = useState(null); // Состояние для выбранного чата
+  const [selectedChatId, setSelectedChatId] = useState(null);
+  const [messages, setMessages] = useState([]);
   const [prompt, setPrompt] = useState('');
-  const [messages, setMessages] = useState([]); // Состояние для хранения сообщений чата
 
   const apiUrl = `${process.env.REACT_APP_EVENTOS_PROXY}/api/solution/${taskId}`;
 
-  // Fetch chats when the component is mounted
   useEffect(() => {
     const fetchChats = async () => {
       setLoading(true);
       try {
         const response = await fetch(`${apiUrl}/chat`, {
-          method: 'GET',
           headers: {
             'Accept': 'application/json',
             'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
           },
         });
 
-        if (!response.ok) {
-          throw new Error('Не удалось загрузить чаты');
-        }
-
+        if (!response.ok) throw new Error('Failed to load chats');
         const data = await response.json();
-        setChats(data);
+        // Map server response to the expected structure
+        const formattedChats = data.map(chat => ({
+          id: chat.id,
+          summary: chat.summary || `Chat ${chat.id}`,
+        }));
+        setChats(formattedChats);
       } catch (err) {
         setError(err.message);
-        console.error(err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchChats();
-  }, [taskId]);
+  }, [apiUrl]);
 
-  // Create a new chat
-  const handleCreateChat = async () => {
+  const createChat = async () => {
     setLoading(true);
     try {
       const response = await fetch(`${apiUrl}/chat`, {
@@ -56,63 +56,54 @@ const ChatComponent = ({ taskId }) => {
         body: JSON.stringify({}),
       });
 
-      if (!response.ok) {
-        throw new Error('Не удалось создать чат');
-      }
-
-      const data = await response.json();
-      setChats([...chats, data]);
-      message.success('Чат создан');
+      if (!response.ok) throw new Error('Failed to create chat');
+      const newChat = await response.json();
+      setChats([...chats, {
+        id: newChat.id,
+        summary: newChat.summary || `Chat ${newChat.id}`,
+      }]);
+      message.success('Chat created');
     } catch (err) {
-      message.error('Не удалось создать чат');
-      console.error(err);
+      message.error(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch chat history
-  const handleFetchHistory = async () => {
-    if (!selectedChat) {
-      message.error('Выберите чат');
-      return;
-    }
-
+  const loadChatMessages = async (chatId) => {
     setLoading(true);
     try {
-      const response = await fetch(`${apiUrl}/chat/${selectedChat}`, {
-        method: 'GET',
+      const response = await fetch(`${apiUrl}/chat/${chatId}`, {
         headers: {
           'Accept': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         },
       });
 
-      if (!response.ok) {
-        throw new Error('Не удалось получить историю чата');
-      }
-
+      if (!response.ok) throw new Error('Failed to fetch chat history');
       const data = await response.json();
-      setMessages(data); // Сохраняем историю чата в состояние
-      message.success('История чата получена');
+      // Map server messages to the expected structure
+      const formattedMessages = data.messages.map(message => ({
+        fromUser: message.role === 'user',
+        text: message.content,
+      }));
+      setMessages(formattedMessages);
     } catch (err) {
-      message.error('Ошибка при получении истории чата');
-      console.error(err);
+      message.error(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Send prompt to the selected chat
-  const handleSendPrompt = async () => {
-    if (!selectedChat || !prompt) {
-      message.error('Выберите чат и введите промпт');
+  const sendPrompt = async () => {
+    if (!selectedChatId || !prompt.trim()) {
+      message.error('Select a chat and enter a prompt');
       return;
     }
 
     setLoading(true);
     try {
-      const response = await fetch(`${apiUrl}/chat/${selectedChat}`, {
+      const response = await fetch(`${apiUrl}/chat/${selectedChatId}`, {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
@@ -122,112 +113,106 @@ const ChatComponent = ({ taskId }) => {
         body: JSON.stringify({ prompt }),
       });
 
-      if (!response.ok) {
-        throw new Error('Не удалось отправить промпт');
-      }
-
-      const data = await response.json();
-      setMessages([...messages, { text: prompt, fromUser: true }, { text: data.response, fromUser: false }]); // Добавляем новое сообщение
+      if (!response.ok) throw new Error('Failed to send prompt');
+      const reply = await response.json();
+      const updatedMessages = reply.messages.map(message => ({
+        fromUser: message.role === 'user',
+        text: message.content,
+      }));
+      setMessages(updatedMessages);
       setPrompt('');
-      message.success('Промпт отправлен');
     } catch (err) {
-      message.error('Ошибка при отправке промпта');
-      console.error(err);
+      message.error(err.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: '800px', margin: 'auto', position: 'relative', height: '100vh' }}>
-      <Title level={4}>Выберите чат или создайте новый</Title>
+    <Layout style={{ height: 'calc(100vh - 186px)', backgroundColor: '#f0f2f5' }}>
+      <Header style={{ backgroundColor: '#001529', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Title level={3} style={{ color: '#fff', margin: 0 }}>Chat Manager</Title>
+        <Button type="primary" onClick={createChat} disabled={loading}>Create Chat</Button>
+      </Header>
 
-      {loading ? (
-        <Spin tip="Загрузка чатов..." />
-      ) : error ? (
-        <Text type="danger" style={{ display: 'block' }}>{error}</Text>
-      ) : chats.length === 0 ? (
-        <Card
-          title="Нет чатов"
-          bordered={false}
-          style={{ width: '100%' }}
-        >
-          <Button
-            type="primary"
-            onClick={handleCreateChat}
-            style={{ marginBottom: '10px', width: "100%" }}
-          >
-            Создать новый чат
-          </Button>
-          <Text>Чатов нет. Хотите создать новый чат?</Text>
-        </Card>
-      ) : (
-        <div>
-          <Button
-            type="primary"
-            onClick={handleCreateChat}
-            style={{ marginBottom: '10px', width: "100%" }}
-          >
-            Создать новый чат
-          </Button>
+      <Content style={{ display: 'flex', flexDirection: 'row', padding: 16 }}>
+        <div style={{ width: '25%', paddingRight: 16 }}>
           <Select
-            placeholder="Выберите чат"
-            style={{ width: '100%', marginBottom: '10px' }}
-            onChange={setSelectedChat}
+            style={{ width: '100%' }}
+            placeholder="Select a chat"
+            onChange={(chatId) => {
+              setSelectedChatId(chatId);
+              loadChatMessages(chatId);
+            }}
           >
             {chats.map(chat => (
               <Select.Option key={chat.id} value={chat.id}>
-                {chat.summary || 'Без описания'}
+                {chat.summary}
               </Select.Option>
             ))}
           </Select>
+        </div>
 
-          {selectedChat && (
-            <>
-              <Button
-                type="primary"
-                onClick={handleFetchHistory}
-                style={{ marginTop: '10px', width: '100%' }}
-              >
-                Получить историю чата
-              </Button>
-              <div style={{ marginTop: '20px', maxHeight: 'calc(100vh - 200px)', overflowY: 'auto', paddingBottom: '50px' }}>
-                <List
-                  header={<div>История чата</div>}
-                  bordered
-                  dataSource={messages}
-                  renderItem={message => (
-                    <List.Item style={{ padding: '10px 20px' }}>
-                      <Text>{message.fromUser ? `Вы: ${message.text}` : `Бот: ${message.text}`}</Text>
-                    </List.Item>
-                  )}
-                />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#fff', borderRadius: 8, padding: 16, overflow: 'hidden' }}>
+          <div style={{ flex: 1, overflowY: 'auto', marginBottom: 16 }}>
+            {loading && <Spin tip="Loading..." />}
+            {error && <Text type="danger">{error}</Text>}
+
+            {messages.map((item, index) => (
+              <div key={index} style={{ display: 'flex', marginBottom: 8, alignItems: 'flex-start' }}>
+                {item.fromUser ? (
+                  <Avatar 
+                    style={{ 
+                      backgroundColor: '#1890ff', 
+                      marginRight: 8, 
+                      width: 40, 
+                      height: 40, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      fontSize: 20 
+                    }} 
+                    icon={<UserOutlined />} 
+                  />
+                ) : (
+                  <Avatar 
+                    style={{ 
+                      backgroundColor: '#f5222d', 
+                      marginRight: 8, 
+                      width: 40, 
+                      height: 40, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      fontSize: 20 
+                    }} 
+                    icon={<RobotOutlined />} 
+                  />
+                )}
+                <div>
+                  <Text strong>{item.fromUser ? 'You' : 'Bot'}</Text>
+                  <div>{item.text}</div>
+                </div>
               </div>
-            </>
-          )}
+            ))}
+          </div>
 
-          {selectedChat && (
-            <div style={{ position: 'absolute', bottom: '20px', width: '100%', padding: '0 20px' }}>
-              <Space direction="vertical" style={{ width: '100%' }}>
-                <Input
-                  value={prompt}
-                  onChange={e => setPrompt(e.target.value)}
-                  placeholder="Введите промпт"
-                  style={{ width: '100%' }}
-                />
-                <Button
-                  type="primary"
-                  onClick={handleSendPrompt}
-                  style={{ width: '100%' }}
-                >
-                  Отправить промпт
-                </Button>
-              </Space>
-            </div>
+          {selectedChatId && (
+            <Space.Compact style={{ display: 'flex', marginTop: 'auto' }}>
+              <Input
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Type your message..."
+                onPressEnter={sendPrompt}
+              />
+              <Button type="primary" onClick={sendPrompt} disabled={loading}>Send</Button>
+            </Space.Compact>
           )}
         </div>
-      )}
-    </div>
+      </Content>
+
+      {/* <Footer style={{ textAlign: 'center' }}>Chat Application ©2024</Footer> */}
+    </Layout>
   );
 };
 

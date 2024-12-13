@@ -1,3 +1,4 @@
+import asyncio
 from datetime import date
 from http import HTTPStatus
 from typing import List, Optional, Union, Tuple
@@ -16,11 +17,15 @@ from suai_project.endpoints.models.extra_models import TokenModel
 from suai_project.endpoints.models.task_data import TaskData
 
 from suai_project.endpoints.validation.Validator import Validator
+from suai_project.services.TaskService import TaskService
 from suai_project.services.account_service import get_account, get_account_with_raise, check_permission
 from suai_project.utils.generate_token import generate_key
 
 
 class TaskEndpoint(BaseTaskApi):
+
+    def __init__(self):
+        self.task_service = TaskService()
 
     async def create_task(self, task_data: Optional[CreateTaskData],
                           token_BearerAuth: TokenModel) -> TaskData:
@@ -30,8 +35,9 @@ class TaskEndpoint(BaseTaskApi):
         validator.length("task", min_len=100, max_len=10000)
         validator.check()
         task_id = generate_key(60)
-        task = TaskDAO.add(**{**task_data.to_dict(), "user_id": user.id, "id": task_id})
+        task = TaskDAO.add(**{**task_data.to_dict(), "user_id": user.id, "id": task_id, "is_analyzed": False})
         task = TaskDAO.to_api(task, user)
+        asyncio.create_task(self.task_service.indexing_task(task))
         return task
 
     async def edit_task(self, taskId: StrictStr, task_data: Optional[CreateTaskData],

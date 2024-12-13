@@ -23,7 +23,7 @@ class TaskDAO(BaseDAO):
             author = owner.full_name,
             owner = owner.id == user.id if user else False,
             solved = "Не решено",  # TODO
-            is_analyzed = False    # TODO
+            is_analyzed = task_dao_data.is_analyzed
         )
 
     @classmethod

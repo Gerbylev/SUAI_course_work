@@ -27,7 +27,7 @@ class SubtaskEndpoint(BaseSubtaskApi):
             raise HandleWebException(
                 ErrorResponse(error_message="Chat not found or access denied", status_code=HTTPStatus.BAD_REQUEST))
 
-    async def delete_subtask(self, taskId: StrictStr, subtask_id: Optional[StrictInt], token_BearerAuth: TokenModel) -> \
+    async def delete_subtask(self, taskId: StrictStr, subtask_id: StrictInt, token_BearerAuth: TokenModel) -> \
     List[SubtaskData]:
         user = get_account_with_raise(token_BearerAuth)
         task = TaskDAO.find_one_or_none_by_id(taskId)

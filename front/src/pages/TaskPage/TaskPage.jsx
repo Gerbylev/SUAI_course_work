@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Upload, Typography, Tag, Divider, Modal, List, message, Input } from 'antd';
+import { Button, Upload, Typography, Tag, Divider, Modal, List, message, Input, Spin, Alert } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
 import { useNavigate, useParams } from 'react-router-dom';
 import TaskDetailPage from '../../components/TaskForm/TaskDetailPage';
 import TaskForm from '../../components/TaskForm/TaskForm';
 import ChatComponent from '../../components/ChatComponent/ChatComponent';
+import CrudComponent from '../../components/SubTask/CrudComponent';
 
 const { Title, Text } = Typography;
 
@@ -24,7 +25,7 @@ const LeftPanel = ({ taskData, isOwnerView, handleTaskChange, onSubmit, isOwner,
             </div>    
             );
     }
-
+    
     const onDelete = async () => {
         try {
             const apiUrl = process.env.REACT_APP_EVENTOS_PROXY + `/api/task/${taskData.id}`
@@ -56,6 +57,7 @@ const LeftPanel = ({ taskData, isOwnerView, handleTaskChange, onSubmit, isOwner,
                 onFinish={onSubmit}
                 onDelete={onDelete}
             />
+            <CrudComponent taskId={taskData.id}/>
             <Divider />
             <Button type="primary" onClick={() => console.log('View Task Submissions')}>Посмотреть выполненные задачи</Button>
             <Button type="link" onClick={()=>setIsOwnerView(!isOwnerView)}>Просмотреть задание</Button>
@@ -63,79 +65,159 @@ const LeftPanel = ({ taskData, isOwnerView, handleTaskChange, onSubmit, isOwner,
     );
 };
 
+const statusColorMap = {
+  ok: "green",
+  error: "red",
+  warning: "orange",
+};
+
 const RightPanel = ({ isChat, setIsChat, taskId }) => {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, alignItems: 'center' }}>
-        <div style={{ display: 'flex', marginBottom: '20px' }}>
-          <Button
-            type={isChat ? 'primary' : 'text'}
-            onClick={() => setIsChat(true)}
-            style={{
-              marginRight: '30px',
-              fontSize: '20px',
-              fontWeight: 'bold',
-              color: 'black',
-              textDecoration: isChat ? 'underline' : 'none',
-              border: 'none',
-              background: 'none',
-            }}
-          >
-            Чат
-          </Button>
-          <Button
-            type={!isChat ? 'primary' : 'text'}
-            onClick={() => setIsChat(false)}
-            style={{
-              fontSize: '20px',
-              fontWeight: 'bold',
-              color: 'black',
-              textDecoration: !isChat ? 'underline' : 'none',
-              border: 'none',
-              background: 'none',
-            }}
-          >
-            Решение
-          </Button>
-        </div>
-        <Divider />
-        {isChat ? (
-          <div>
-            <ChatComponent taskId={taskId} />
-          </div>
-        ) : (
-          <div style={{ padding: '20px' }}>
-            <Title level={4}>Загрузить решение</Title>
-            <Text>Вы можете загрузить ссылку на GitHub или архив с решением:</Text>
-            <Divider />
-            <div style={{ marginBottom: '16px' }}>
-              <Text>Ссылка на GitHub:</Text>
-              <Input
-                type="url"
-                placeholder="https://github.com/your-repo"
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  marginTop: '8px',
-                  border: '1px solid #d9d9d9',
-                  borderRadius: '4px',
-                }}
-              />
-              <Button type="primary" style={{ marginTop: '8px' }}>
-                Отправить ссылку
-              </Button>
-            </div>
-            <Divider />
-            <div>
-              <Text>Или загрузите zip-файл:</Text>
-              <Upload beforeUpload={() => false} accept=".zip">
-                <Button icon={<UploadOutlined />}>Загрузить zip-файл</Button>
-              </Upload>
-            </div>
-          </div>
-        )}
-      </div>
-    );
+  const [loading, setLoading] = useState(false);
+  const [comments, setComments] = useState([]);
+  const [status, setStatus] = useState([])
+  const [error, setError] = useState(null);
+  const apiUrl = process.env.REACT_APP_EVENTOS_PROXY;
+
+  useEffect(() => {
+    const fetchComments = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`${apiUrl}/api/solution/${taskId}`, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Ошибка при получении данных: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        setComments(data.comments || []);
+        setStatus(data.status)
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchComments();
+  }, [apiUrl, taskId]);
+
+  const handleUpload = async (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${apiUrl}/api/solution/${taskId}/file`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Ошибка при загрузке файла: ${response.statusText}`);
+      }
+      // const updatedComments = await response.json();
+      // setComments(updatedComments.comments || []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, alignItems: "center" }}>
+      <div style={{ display: "flex", marginBottom: "20px" }}>
+        <Button
+          type={isChat ? "primary" : "text"}
+          onClick={() => setIsChat(true)}
+          style={{
+            marginRight: "30px",
+            fontSize: "20px",
+            fontWeight: "bold",
+            color: "black",
+            textDecoration: isChat ? "underline" : "none",
+            border: "none",
+            background: "none",
+          }}
+        >
+          Чат
+        </Button>
+        <Button
+          type={!isChat ? "primary" : "text"}
+          onClick={() => setIsChat(false)}
+          style={{
+            fontSize: "20px",
+            fontWeight: "bold",
+            color: "black",
+            textDecoration: !isChat ? "underline" : "none",
+            border: "none",
+            background: "none",
+          }}
+        >
+          Решение
+        </Button>
+      </div>
+      <Divider />
+      {isChat ? (
+        <div>
+          <ChatComponent taskId={taskId} />
+        </div>
+      ) : (
+        <div>
+          <Text>Или загрузите zip-файл:</Text>
+          <Upload
+            beforeUpload={(file) => {
+              handleUpload(file);
+              return false;
+            }}
+            accept=".zip"
+          >
+            <Button icon={<UploadOutlined />} disabled={loading}>
+              Загрузить zip-файл
+            </Button>
+          </Upload>
+          <Divider />
+          {loading && <Spin tip="Загрузка..." />}
+          {error && <Alert message="Ошибка" description={error} type="error" showIcon />}
+          {status && <Title>Статус задачи: {status}</Title>}
+          {comments.length > 0 && (
+            <div>
+              <Text strong>Комментарии:</Text>
+              <ul>
+                {comments.map((comment, index) => (
+                  <li key={index} style={{ marginBottom: "10px" }}>
+                    <Tag
+                      color={statusColorMap[comment.status] || "default"}
+                      style={{
+                        textTransform: "uppercase",
+                        fontWeight: "bold",
+                        fontSize: "12px",
+                      }}
+                    >
+                      {comment.status}
+                    </Tag>{" "}
+                    <Text>{comment.message}</Text>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const TaskPage = () => {
     const navigate = useNavigate();

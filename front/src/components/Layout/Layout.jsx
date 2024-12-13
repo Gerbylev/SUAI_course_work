@@ -15,11 +15,11 @@ const MainLayout = observer(({ children, hasSidebar = true }) => {
         <Topbar isLogin={userStore.isLogin} />
       </Header>
       <Layout>
-        {(hasSidebar && userStore.isLogin) && (
+        {/* {(hasSidebar && userStore.isLogin) && (
           <Sider className="layout-sider">
             <Sidebar />
           </Sider>
-        )}
+        )} */}
         <Content className="layout-content">{children}</Content>
       </Layout>
     </Layout>

@@ -5,7 +5,10 @@ from typing import List
 import yaml
 from jinja2 import Template
 
+from suai_project.dao.subtask_dao import SubtaskDao
+from suai_project.dao.task_dao import TaskDAO
 from suai_project.endpoints.dto.task_dto import FileDto, HighlightDto, TaskDto
+from suai_project.models.models import Task
 from suai_project.services.LLMService import LLMService
 from suai_project.services.registry import REGISTRY
 
@@ -21,32 +24,27 @@ class TaskService:
     def __init__(self):
         self.llm_service: LLMService = REGISTRY.get(LLMService)
 
-    async def indexing_task(self, task_text: str, example: FileDto = None, comment: str = None)-> TaskDto:
-        if not example:
-            highlights = await self.__get_highlights_from_text(task_text, comment)
-        else:
-            highlights = await self.__get_highlights_from_text_and_file(task_text, example)
-        return TaskDto(
-            task = task_text,
-            example = example,
-            highlights = highlights
-        )
+    async def indexing_task(self, task: Task, example: FileDto = None, comment: str = None)-> TaskDto:
+        # if not example:
+        highlights = await self.__get_highlights_from_text(task)
+        # else:
+        #     highlights = await self.__get_highlights_from_text_and_file(task, example)
+        for highlight in highlights:
+            SubtaskDao.add(**{"task_id": task.id, "text": highlight})
+        TaskDAO.update(filter_by={"id": task.id}, **{"is_analyzed": True})
 
 
-    async def __get_highlights_from_text(self, task_text: str, comment: str = None) -> List[HighlightDto]:
+    async def __get_highlights_from_text(self, task_text: str, comment: str = None) -> List[str]:
         def parse_task_description(text:str):
             result = []
             lines = text.splitlines()
             for line in lines:
-                if '->' in line:
-                    parts = line.split('->')
-                    task_description = parts[0].strip()
+                if '-' in line:
+                    parts = line.split('-')
                     if len(parts) > 1:
-                        conditions_part = parts[1].strip()
-                        requirement = [condition.strip() for condition in conditions_part.split('\\t')]
-                    else:
-                        requirement = []
-                    result.append(HighlightDto(task=task_description, requirement=requirement))
+                        requirement = parts[1].strip()
+                        result.append(requirement)
+
 
             return result
 
